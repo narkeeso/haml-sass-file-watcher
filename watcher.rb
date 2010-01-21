@@ -3,6 +3,25 @@
 require "rubygems"
 require "hpricot"
 
+# START CONFIGURATION OPTIONS
+
+# Define where your haml and sass files are stored (omit slashes)
+# NOTE: HAML or SASS files must be under these directories.
+haml_dir_name = "haml"
+sass_dir_name = "sass"
+
+# Define your output folders (can be relative to the watched folder)
+haml_output_dir = "output"
+sass_output_dir = "stylesheets"
+
+# Define your haml output extension (useful if you want another output such as "php")
+haml_output_ext = "html"
+
+# Choose your SASS output style (consult current sass documentation for available styles)
+# As of Sass 2.2.17 options are "nested", "expanded", "compact", "compressed"
+sass_style = "compact"
+
+# END OF CONFIGURATION OPTIONS
 
 trap("SIGINT") { exit }
 
@@ -35,21 +54,21 @@ while true do
       options = ""
       is_haml = false
       
-      ex = f.match(/(sass|haml)$/)[1]
+      ex = f.match(/(#{sass_dir_name}|#{haml_dir_name})$/)[1]
       case ex
-      when "haml"
-        output_folder = "#{watch_folder}/output"
+      when "#{haml_dir_name}"
+        output_folder = "#{watch_folder}/#{haml_output_dir}"
         Dir.mkdir(output_folder) unless File.directory?(output_folder)
         
-        output_file = f.gsub(/\/haml\/([^\/]+)\.haml/, '/output/\1.html')
+        output_file = f.gsub(/\/haml\/([^\/]+)\.haml/, "/#{haml_output_dir}/" '\1.' "#{haml_output_ext}")
         is_haml = true
 
-      when "sass"
-        output_folder = "#{watch_folder}/css"
+      when "#{sass_dir_name}"
+        output_folder = "#{watch_folder}/#{sass_output_dir}"
         Dir.mkdir(output_folder) unless File.directory?(output_folder)
 
-        output_file = f.gsub(/\/sass\/([^\/]+)\.sass/, '/css/\1.css')
-        options = "--style expanded"
+        output_file = f.gsub(/\/sass\/([^\/]+)\.sass/, "/#{sass_output_dir}/" '\1.css')
+        options = "--style #{sass_style}"
 
       end
 
@@ -61,7 +80,7 @@ while true do
       
       html = Hpricot( File.read(output_file) )
       (html/"include").each do |inc|
-        fragment = File.read("#{watch_folder}/output/#{ inc['file'] }.html") rescue nil
+        fragment = File.read("#{watch_folder}/#{haml_output_dir}/#{ inc['file'] }.#{haml_output_ext}") rescue nil
         next unless fragment
       
         inc.swap("\n<!-- INCLUDE: #{ inc['file'] } START -->\n#{fragment}<!-- INCLUDE: #{ inc['file'] } END -->\n")
